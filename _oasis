@@ -1,0 +1,30 @@
+OASISFormat: 0.4
+Name:        jsonrpc
+Version:     0.1.0
+Synopsis:    JSON-RPC 2.0
+Authors:     Markus Weissmann
+License:     MIT
+Plugins:     META (0.4)
+
+Library "jsonrpc"
+  Path:         src
+  BuildTools:   ocamlbuild
+  Modules:      Jsonrpc
+  BuildDepends: yojson, result
+
+Document doclib
+  Title:                API reference for JSON-RPC
+  Type:                 ocamlbuild (0.3)
+  Install:              false
+  BuildTools+:          ocamlbuild, ocamldoc
+  XOCamlbuildPath:      src
+  XOCamlbuildLibraries: jsonrpc
+
+Executable "test"
+  Path:       src
+  MainIs:     test.ml
+  BuildDepends: json-predicate
+  CompiledObject: best
+  BuildTools: ocamlbuild
+  Install: false
+
