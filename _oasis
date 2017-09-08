@@ -23,7 +23,7 @@ Document doclib
 Executable "test"
   Path:       src
   MainIs:     test.ml
-  BuildDepends: json-predicate
+  BuildDepends: jsonrpc
   CompiledObject: best
   BuildTools: ocamlbuild
   Install: false
