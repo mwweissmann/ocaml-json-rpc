@@ -1,6 +1,6 @@
 # OASIS_START
-# DO NOT EDIT (digest: 7eecadac1884b386b30da5d2b65ac813)
-version = "0.1.0"
+# DO NOT EDIT (digest: b2fd345ce98a13d82dca5fd4ce85ff1e)
+version = "0.2.0"
 description = "JSON-RPC 2.0"
 requires = "yojson result"
 archive(byte) = "jsonrpc.cma"
