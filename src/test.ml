@@ -5,13 +5,16 @@ let _ =
 let _ =
   let json = Jsonrpc.request ~params:(`String "bar") "foo" ~id:(`Int 42) in
   print_endline (Yojson.Basic.to_string json);
-  let rpc = Jsonrpc.to_json (Jsonrpc.of_json json) in
+  let rpc = Jsonrpc.to_json (Jsonrpc.of_json_exn json) in
   print_endline (Yojson.Basic.to_string rpc)
   
 let _ =
   let json = Jsonrpc.response (`Int 6) (`String "23") in
   print_endline (Yojson.Basic.to_string json);
-  let rpc = Jsonrpc.to_json (Jsonrpc.of_json json) in
+  let rpc = Jsonrpc.to_json (Jsonrpc.of_json_exn json) in
   print_endline (Yojson.Basic.to_string rpc)
 
+let _ =
+  let str = "does not compute" in
+  Jsonrpc.of_string_exn str
 

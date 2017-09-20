@@ -39,14 +39,14 @@ let request ~id ?params name = request_ name (Some id) params
 
 let notification ?params name = request_ name None params
 
-let response data id =
+let response ~id data =
   `Assoc [
     "jsonrpc", `String "2.0";
     "result", data;
     "id", json_of_id id;
   ]
 
-let error code message data id =
+let error ~id ?data code message =
   let jdata = match data with
     | None -> []
     | Some json -> ["data", json]
@@ -60,13 +60,17 @@ let error code message data id =
 let to_json = function
   | Request { name; params; id } -> request_ name (Some id) params
   | Notification { name; params } -> request_ name None params
-  | Response { result; id } -> response result id
-  | Error { code; message; data; id } -> error code message data id
+  | Response { result; id } -> response ~id result
+  | Error { code; message; data; id } ->
+    begin match data with
+    | None -> error ~id code message
+    | Some data -> error ~id ~data code message
+    end
 
 let assoc_safe k xs =
   try Some (List.assoc k xs) with Not_found -> None
 
-let of_json : (json -> t) = function
+let of_json_exn : (json -> t) = function
   | `Assoc xs ->
     begin match assoc_safe "jsonrpc" xs with
     | Some (`String x) when x <> "2.0" -> invalid_arg "protocol version mismatch"
@@ -104,6 +108,15 @@ let of_json : (json -> t) = function
     end
   | _ -> invalid_arg "not an associative array"
 
-let of_string s = of_json (Yojson.Basic.from_string s)
+let ewrap f x =
+  try Result.Ok (f x) with
+  | Invalid_argument e -> Result.Error e
+  | Yojson.Json_error e -> Result.Error e
+
+let of_json = ewrap of_json_exn
+
+let of_string_exn s = of_json_exn (Yojson.Basic.from_string s)
+
+let of_string = ewrap of_string_exn
 
 let to_string r = Yojson.Basic.to_string (to_json r)
