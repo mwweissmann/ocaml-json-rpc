@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: c472ef2f388ad2bf54c98fcb1fd1513f) *)
+(* DO NOT EDIT (digest: cd9b7f9d238d927b3e6a3001d74a98a3) *)
 module OASISGettext = struct
 (* # 22 "src/oasis/OASISGettext.ml" *)
 
@@ -882,7 +882,7 @@ let package_default =
      MyOCamlbuildBase.lib_ocaml = [("jsonrpc", ["src"], [])];
      lib_c = [];
      flags = [];
-     includes = []
+     includes = [("example", ["src"])]
   }
   ;;
 
