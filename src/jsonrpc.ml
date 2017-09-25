@@ -120,3 +120,65 @@ let of_string_exn s = of_json_exn (Yojson.Basic.from_string s)
 let of_string = ewrap of_string_exn
 
 let to_string r = Yojson.Basic.to_string (to_json r)
+
+module Server = struct
+  type reply = (json, int * string) Result.result
+
+  type callback = json option -> reply
+
+  type t = {
+    callbacks : (string, callback) Hashtbl.t;
+    mutable default : callback
+  }
+
+  module Error = struct
+    let parse_error_v = (-32700, "parse error")
+    let parse_error = Result.Error parse_error_v
+    let invalid_request = Result.Error (-32600, "invalid request")
+    let method_not_found = Result.Error (-32601, "method not found") 
+    let invalid_params = Result.Error (-32602, "invalid params")
+    let internal_error = Result.Error (-32603, "internal error")
+  end
+
+  let create () = {
+    callbacks = Hashtbl.create 64;
+    default = (fun _ -> Error.method_not_found);
+  }
+
+  let add_cb srv ~name cb = Hashtbl.add srv.callbacks name cb
+
+  let remove_cb ~name srv = Hashtbl.remove srv.callbacks name
+
+  let set_default srv cb = srv.default <- cb
+
+  let find srv k =
+    try
+      Hashtbl.find srv.callbacks k
+    with Not_found -> srv.default
+
+  let evalj srv js =
+    match of_json js with
+    | Result.Error _ -> None
+    | Result.Ok (Request { name; params; id }) ->
+      begin match (find srv name) params with
+      | Result.Ok result-> Some (response ~id result)
+      | Result.Error (code, e) -> Some (error ~id ~data:js code e)
+      end
+    | Result.Ok (Notification { name; params }) ->
+      begin match (find srv name) params with
+      | Result.Ok result-> None
+      | Result.Error (code, e) -> None
+      end
+    | Result.Ok _ -> None
+
+  let eval srv s =
+    try
+      begin match evalj srv (Yojson.Basic.from_string s) with
+      | None -> None
+      | Some js -> Some (Yojson.Basic.to_string js)
+      end
+    with Yojson.Json_error _ ->
+      let err = error ~id:`Null (fst Error.parse_error_v) (snd Error.parse_error_v) in
+      Some (Yojson.Basic.to_string err)
+end
+

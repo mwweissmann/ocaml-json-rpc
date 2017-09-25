@@ -52,3 +52,60 @@ val of_string_exn : string -> t
 (** parse a JSON value to a JSON-RPC message value from a string; in case of an
     error either [Invalid_argument] or [Yojson.Json_error] are raised. *)
 
+module Server : sig
+  type t
+  (** A JSON-RPC server *)
+ 
+  type reply = (json, int * string) Result.result
+  (** the return value of an JSON-RPC function *)
+
+  type callback = json option -> reply
+  (** a JSON-RPC function *)
+
+  module Error : sig
+    val parse_error : reply
+    (** The JSON-RPC error value for parse error *)
+
+    val invalid_request : reply
+    (** The JSON-RPC error value for invalid request *)
+
+    val method_not_found : reply
+    (** The JSON-RPC error value for method not found *)
+
+    val invalid_params : reply
+    (** The JSON-RPC error value for invalid parameters *)
+
+    val internal_error : reply
+    (** The JSON-RPC error value for internal error *)
+  end
+
+  val create : unit -> t
+  (** create a JSON-RPC server; the default function will be set to
+      [(fun _ -> Error.method_not_found)], returning this error message as
+      reply to all requests. *)
+
+  val add_cb : t -> name:string -> callback -> unit
+  (** [add_cb srv ~name cb] add the callback function [cb] to the server [src].
+      The function will be called in a JSON-RPC request matches the given
+      function name [name]. *)
+
+  val set_default : t -> callback -> unit
+  (** [set_default src cb] sets the default callback function to [cb] in the
+      server [srv]. This function is called if no callback function matches the
+      function name in the RPC reuqest. *)
+      
+  val remove_cb : name:string -> t -> unit
+  (** [remove_cb ~name srv] removes the callback function for name [name] from
+      the server [srv]. *)
+
+  val evalj : t -> json -> json option
+  (** [evalj srv json_in] generates a return value for the given JSON-RPC
+      request [json_in] for the server [srv]. If no answer is to be sent back
+      to the caller, this function will return [None]. *)
+
+  val eval : t -> string -> string option
+  (** [eval srv s] works just like [evalj srv json] but will parse the value
+      [s] to JSON; it also converts the reply to a string value to be sent back
+      to the caller. *)
+end
+
